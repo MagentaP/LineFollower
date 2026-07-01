@@ -5,7 +5,10 @@ Chassis::Chassis(Motor& l, Motor& r)
     : left_(l), right_(r),
       pid_yaw_(yaw_kp, yaw_ki, yaw_kd,
                -max_angular_velocity, max_angular_velocity, millis(), true)
-{ time_ms_ = millis(); }
+{
+    imu_.begin();
+    time_ms_ = millis();
+}
 
 void Chassis::setVelocity(float v, float w)
 {
@@ -27,13 +30,27 @@ void Chassis::stop() { left_.stop(); right_.stop(); }
 
 void Chassis::chassisTask()
 {
+    updateImu_();
     updateSensor_();
+    if (checkFall_()) return;
     static unsigned long tCtrl = 0;
     if (millis() - tCtrl < CONTROL_INTERVAL_MS) return;
     tCtrl = millis();
     syncPid_();
     dispatchMode_();
     applyOutput_();
+}
+
+void Chassis::updateImu_()
+{
+    static unsigned long t = 0;
+    if (millis() - t < 5) return;
+    t = millis();
+    float dt = (millis() - time_ms_) / 1000.0f;
+    time_ms_ = millis();
+    imu_.update(dt);
+    imu_state_ = imu_.getState();
+    fallen_ = imu_state_.fallen;
 }
 
 void Chassis::updateSensor_()
@@ -43,6 +60,14 @@ void Chassis::updateSensor_()
     t = millis();
     sensor_.readRaw(raw_buf_);
     sensor_.getPos(raw_buf_, pos_, conf_);
+}
+
+bool Chassis::checkFall_()
+{
+    static int fr = 0;
+    if (fallen_) { fr = 0; stop(); state_str_ = "FALLEN"; omega_ = 0; vel_ = 0; return true; }
+    if (fr < 30)  { fr++;    state_str_ = "LOCKED"; omega_ = 0; vel_ = 0; return true; }
+    return false;
 }
 
 void Chassis::syncPid_()
@@ -81,7 +106,7 @@ void Chassis::handleDebug_()
     omega_ = runYawPid_(yaw_ref_);
 }
 
-void Chassis::handleStop_() { stop(); vel_=0; yaw_ref_=0; pid_yaw_.reset(); auto_state_=AUTO_LOCKED; }
+void Chassis::handleStop_() { stop(); vel_=0; yaw_ref_=imu_state_.yaw; pid_yaw_.reset(); auto_state_=AUTO_LOCKED; }
 void Chassis::handleManual_()
 {
     if (web_cmd_=="LEFT")       { man_ref_+=1.57f*0.01f*R2D; wrapAngle_(man_ref_); }
@@ -128,6 +153,6 @@ void Chassis::autoLocked_()
 }
 
 void Chassis::enterAutoState_(AutoState s) { auto_state_=s; pid_yaw_.reset(); if(s==AUTO_GAP) gap_time_=millis(); if(s==AUTO_LOST) lost_time_=millis(); if(s==AUTO_LOCKED){lock_count_=0;stop();} }
-float Chassis::runYawPid_(float ref){ float err=ref; wrapAngle_(err); float w=pid_yaw_.update(err*D2R,millis()); if(w>max_angular_velocity) w=max_angular_velocity; if(w<-max_angular_velocity) w=-max_angular_velocity; return w; }
+float Chassis::runYawPid_(float ref){ float err=ref-imu_state_.yaw; wrapAngle_(err); float w=pid_yaw_.update(err*D2R,millis()); if(w>max_angular_velocity) w=max_angular_velocity; if(w<-max_angular_velocity) w=-max_angular_velocity; return w; }
 void Chassis::wrapAngle_(float& v){ while(v>180)v-=360; while(v<-180)v+=360; }
 String Chassis::autoStateName_(AutoState s){ switch(s){ case AUTO_NORMAL:return"NORMAL"; case AUTO_GAP:return"GAP"; case AUTO_LOST:return"LOST"; case AUTO_LOCKED:return"LOCKED"; default:return"?"; } }

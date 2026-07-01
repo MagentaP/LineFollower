@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "motor.hpp"
+#include "imu.hpp"
 #include "controller.hpp"
 #include "sensor.hpp"
 #include "config.hpp"
@@ -13,6 +14,7 @@ public:
     Chassis(Motor& l, Motor& r);
     void setVelocity(float v, float w);
     void stop();
+    void calibrateImu() { imu_.calibrateBias(200); imu_.reset(); }
     void chassisTask();
 
     String web_mode_ = "STOP";
@@ -21,12 +23,16 @@ public:
     float debug_speed_ = 0;
     float pos_ = 0, conf_ = 0, omega_ = 0, vel_ = 0, yaw_ref_ = 0;
     String state_str_ = "LOCKED";
+    bool fallen_ = false;
+    const ImuState& imuState() const { return imu_state_; }
     int raw_buf_[4] = {};
 
 private:
     Motor& left_;
     Motor& right_;
     LineSensor sensor_;
+    Mpu6050Ekf imu_;
+    ImuState imu_state_;
     PID pid_yaw_;
     unsigned long time_ms_;
     AutoState auto_state_ = AUTO_LOCKED;
@@ -36,7 +42,9 @@ private:
     float last_pos_ = 0, last_omega_ = 0, recovery_sign_ = 1;
     float man_ref_ = 0;
 
+    void updateImu_();
     void updateSensor_();
+    bool checkFall_();
     void syncPid_();
     void dispatchMode_();
     void applyOutput_();
