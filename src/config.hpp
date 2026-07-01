@@ -16,3 +16,6 @@ const int CONTROL_INTERVAL_MS = 10;
 const int LOCKED_STABLE_COUNT = 25;
 const int M1_IN1 = 13, M1_IN2 = 15;
 const int M2_IN1 = 14, M2_IN2 = 25;
+const int WIFI_TIMEOUT_MS = 500;
+const char* const WIFI_SSID = "ESP32_Car";
+const char* const WIFI_PASS = "12345678";
