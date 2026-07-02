@@ -1,39 +1,57 @@
 #pragma once
 #include <Arduino.h>
+#include "driver/pcnt.h"
 
 class Encoder
 {
 public:
-    Encoder(int pin_a, int pin_b, int unit_id = 0)
+    Encoder(int pin_a, int pin_b, int unit_id)
     {
-        pin_a_ = pin_a;
-        pin_b_ = pin_b;
+        unit_ = (pcnt_unit_t)unit_id;
+
+        pcnt_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
+        cfg.pulse_gpio_num = pin_a;
+        cfg.ctrl_gpio_num  = pin_b;
+        // B 高 → INC, B 低 → 反转 → DEC → 方向敏感
+        cfg.lctrl_mode     = PCNT_MODE_REVERSE;
+        cfg.hctrl_mode     = PCNT_MODE_KEEP;
+        cfg.pos_mode       = PCNT_COUNT_INC;
+        cfg.neg_mode       = PCNT_COUNT_DIS;   // 只计正沿，忽略负沿
+        cfg.counter_h_lim  = 32767;
+        cfg.counter_l_lim  = -32768;
+        cfg.unit           = unit_;
+        cfg.channel        = PCNT_CHANNEL_0;
+
+        pcnt_unit_config(&cfg);
+        pcnt_counter_clear(unit_);
+        pcnt_counter_resume(unit_);
+
+        accum_    = 0;
+        last_raw_ = 0;
     }
 
-    void begin()
+    int16_t rawValue()
     {
-        pinMode(pin_a_, INPUT_PULLUP);
-        pinMode(pin_b_, INPUT_PULLUP);
-        attachInterruptArg(digitalPinToInterrupt(pin_a_), isrA_,
-                           this, RISING);
-        attachInterruptArg(digitalPinToInterrupt(pin_b_), isrB_,
-                           this, RISING);
+        int16_t v = 0;
+        pcnt_get_counter_value(unit_, &v);
+        return v;
     }
 
     int32_t read()
     {
-        noInterrupts();
-        int32_t c = counter_;
-        interrupts();
-        return c;
+        int16_t raw = rawValue();
+        int delta = (int16_t)(raw - last_raw_);
+        last_raw_ = raw;
+        accum_ += delta;
+        return accum_;
     }
 
     void clear()
     {
-        noInterrupts();
-        counter_ = 0;
-        state_ = 0;
-        interrupts();
+        accum_ = 0;
+        last_raw_ = 0;
+        pcnt_counter_clear(unit_);
     }
 
     float toRadS(int32_t delta, int cpr, float ratio, float dt)
@@ -42,24 +60,8 @@ public:
         return (delta / (float)cpr) * 2.0f * PI * (1.0f / dt) / ratio;
     }
 
-    int16_t rawValue() const { return read(); }
-
 private:
-    int pin_a_, pin_b_;
-    volatile int32_t counter_ = 0;
-    volatile char state_ = 0;
-
-    static void IRAM_ATTR isrA_(void* arg)
-    {
-        Encoder* e = (Encoder*)arg;
-        if (e->state_ == 'B') { e->counter_++; e->state_ = 0; }
-        else if (e->state_ == 0) e->state_ = 'A';
-    }
-
-    static void IRAM_ATTR isrB_(void* arg)
-    {
-        Encoder* e = (Encoder*)arg;
-        if (e->state_ == 'A') { e->counter_--; e->state_ = 0; }
-        else if (e->state_ == 0) e->state_ = 'B';
-    }
+    pcnt_unit_t unit_;
+    int32_t accum_;
+    int16_t last_raw_;
 };

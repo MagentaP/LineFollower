@@ -86,7 +86,7 @@ public:
         target_rad_s_ = rps;
     }
 
-    int16_t getEncRaw() const
+    int16_t getEncRaw()
     {
         if (!has_encoder_)
         {
