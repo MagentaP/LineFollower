@@ -85,8 +85,8 @@ public:
         target_rad_s_ = rps;
     }
 
-    // 读取编码器并计算轮速
-    void updateSpeed(unsigned long now)
+    // 读取编码器, 更新 rad_s_ (供图表)
+    void readEncoder(unsigned long now)
     {
         if (!has_encoder_)
         {
@@ -104,7 +104,15 @@ public:
         enc_last_cnt_ = cnt;
 
         rad_s_ = enc_->toRadS(delta, ENC_CPR, GEAR_RATIO, dt);
+    }
 
+    // 运行轮速 PID (仅在 encoder 闭环模式下调用)
+    void runSpeedPid(unsigned long now)
+    {
+        if (!has_encoder_)
+        {
+            return;
+        }
         pid_speed_.kp_ = wheel_kp;
         pid_speed_.ki_ = wheel_ki;
         pid_speed_.kd_ = wheel_kd;

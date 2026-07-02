@@ -165,24 +165,26 @@ void Chassis::syncPid_()
 
 void Chassis::updateMotors_()
 {
+    unsigned long now = millis();
+
+    // 始终读取编码器 (供图表)
+    left_.readEncoder(now);
+    right_.readEncoder(now);
+    wl_rad_ = left_.rad_s_;
+    wr_rad_ = right_.rad_s_;
+    wl_tgt_ = left_.target_rad_s_;
+    wr_tgt_ = right_.target_rad_s_;
+
+    // 仅当编码器 PID 开启时运行速度闭环
     if (pid_enabled_)
     {
-        unsigned long now = millis();
-        left_.updateSpeed(now);
-        right_.updateSpeed(now);
-        wl_rad_ = left_.rad_s_;
-        wr_rad_ = right_.rad_s_;
-        wl_tgt_ = left_.target_rad_s_;
-        wr_tgt_ = right_.target_rad_s_;
+        left_.runSpeedPid(now);
+        right_.runSpeedPid(now);
     }
 }
 
 void Chassis::applyOutput_()
 {
-    if (pid_enabled_)
-    {
-        return;
-    }
     setVelocity(vel_, omega_);
 }
 
