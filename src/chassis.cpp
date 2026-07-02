@@ -179,10 +179,8 @@ void Chassis::updateMotors_()
 
 void Chassis::applyOutput_()
 {
-    if (pid_enabled_ && !wheel_debug_)
+    if (pid_enabled_)
     {
-        // encoder PID: motors drive themselves via updateMotors_
-        // setVelocity is skipped
         return;
     }
     setVelocity(vel_, omega_);
@@ -287,8 +285,11 @@ void Chassis::handleStop_()
 {
     stop();
     vel_ = 0;
+    omega_ = 0;
     yaw_ref_ = imu_state_.yaw;
     pid_yaw_.reset();
+    left_.setTargetRadS(0);
+    right_.setTargetRadS(0);
     auto_state_ = AUTO_LOCKED;
 }
 
