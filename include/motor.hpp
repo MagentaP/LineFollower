@@ -33,7 +33,6 @@ public:
         if (encA >= 0 && encB >= 0 && pcntUnit >= 0)
         {
             enc_ = new Encoder(encA, encB, pcntUnit);
-            enc_->begin();
             has_encoder_ = true;
         }
     }
