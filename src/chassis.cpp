@@ -92,9 +92,9 @@ void Chassis::chassisTask()
     }
     tCtrl = millis();
 
-    updateMotors_();
     syncPid_();
     dispatchMode_();
+    updateMotors_();
     applyOutput_();
 }
 
