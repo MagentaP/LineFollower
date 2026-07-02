@@ -92,18 +92,16 @@ public:
         {
             return;
         }
-        static unsigned long last_t = 0;
-        static int32_t last_cnt = 0;
-        float dt = (now - last_t) / 1000.0f;
+        float dt = (now - enc_last_t_) / 1000.0f;
         if (dt <= 0)
         {
             return;
         }
-        last_t = now;
+        enc_last_t_ = now;
 
         int32_t cnt = enc_->read();
-        int32_t delta = cnt - last_cnt;
-        last_cnt = cnt;
+        int32_t delta = cnt - enc_last_cnt_;
+        enc_last_cnt_ = cnt;
 
         rad_s_ = enc_->toRadS(delta, ENC_CPR, GEAR_RATIO, dt);
 
@@ -131,4 +129,6 @@ public:
 private:
     Encoder* enc_;
     PID      pid_speed_;
+    unsigned long enc_last_t_ = 0;
+    int32_t      enc_last_cnt_ = 0;
 };

@@ -334,33 +334,32 @@ void Chassis::handleManual_()
     }
     else
     {
-        // 开环模式: yaw 角度闭环保持航向
-        if (web_cmd_ == "LEFT")
-        {
-            man_ref_ += 1.57f * 0.01f * R2D;
-            wrapAngle_(man_ref_);
-        }
-        else if (web_cmd_ == "RIGHT")
-        {
-            man_ref_ -= 1.57f * 0.01f * R2D;
-            wrapAngle_(man_ref_);
-        }
-        yaw_ref_ = man_ref_;
-
+        // 开环模式: 直接 PWM, 无 yaw 闭环
         if (web_cmd_ == "FWD")
         {
             vel_ = target_speed;
+            omega_ = 0;
         }
         else if (web_cmd_ == "BACK")
         {
             vel_ = -target_speed;
+            omega_ = 0;
+        }
+        else if (web_cmd_ == "LEFT")
+        {
+            vel_ = 0;
+            omega_ = max_angular_velocity;
+        }
+        else if (web_cmd_ == "RIGHT")
+        {
+            vel_ = 0;
+            omega_ = -max_angular_velocity;
         }
         else
         {
             vel_ = 0;
+            omega_ = 0;
         }
-
-        omega_ = runYawPid_(yaw_ref_);
     }
 
     auto_state_ = AUTO_LOCKED;
