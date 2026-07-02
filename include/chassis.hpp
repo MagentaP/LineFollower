@@ -23,6 +23,7 @@ public:
     float debug_angle_ = 0;
     float debug_speed_ = 0;
     bool  pid_enabled_ = false;  // 编码器轮速 PID 开关
+    bool  wheel_debug_ = false;  // 轮速 PID 调试模式
 
     // 只读状态
     float pos_ = 0, conf_ = 0, omega_ = 0, vel_ = 0, yaw_ref_ = 0;
@@ -62,6 +63,7 @@ private:
     void handleDebug_();
     void handleStop_();
     void handleManual_();
+    void handleWheelDebug_();
     void handleAuto_();
 
     // AUTO 子状态

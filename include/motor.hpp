@@ -12,18 +12,12 @@ public:
     bool has_encoder_;
     float rad_s_, target_rad_s_;
 
-    Motor(int in1, int in2, bool rev = false,
-          int encA = -1, int encB = -1, int pcntUnit = -1)
+    Motor(int in1, int in2, bool rev = false)
         : pin_in1_(in1), pin_in2_(in2), reversed_(rev),
-          has_encoder_(encA >= 0 && encB >= 0 && pcntUnit >= 0),
-          rad_s_(0), target_rad_s_(0),
+          has_encoder_(false), rad_s_(0), target_rad_s_(0),
           enc_(nullptr),
           pid_speed_(2.0f, 0.1f, 0.0f, -max_duty, max_duty, 0)
     {
-        if (has_encoder_)
-        {
-            enc_ = new Encoder(encA, encB, pcntUnit);
-        }
     }
 
     ~Motor()
@@ -31,6 +25,15 @@ public:
         if (enc_)
         {
             delete enc_;
+        }
+    }
+
+    void beginEncoder(int encA, int encB, int pcntUnit)
+    {
+        if (encA >= 0 && encB >= 0 && pcntUnit >= 0)
+        {
+            enc_ = new Encoder(encA, encB, pcntUnit);
+            has_encoder_ = true;
         }
     }
 

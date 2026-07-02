@@ -174,7 +174,37 @@ void Chassis::updateMotors_()
 
 void Chassis::applyOutput_()
 {
+    if (pid_enabled_ && !wheel_debug_)
+    {
+        // encoder PID: motors drive themselves via updateMotors_
+        // setVelocity is skipped
+        return;
+    }
     setVelocity(vel_, omega_);
+}
+
+void Chassis::handleWheelDebug_()
+{
+    static unsigned long st = 0;
+    static int phase = 0;
+    float w = max_wheel_velocity * 0.5f;
+
+    if (millis() - st > 1500)
+    {
+        phase = (phase + 1) % 4;
+        st = millis();
+    }
+
+    switch (phase)
+    {
+        case 0: left_.setTargetRadS(w);  right_.setTargetRadS(w);  break;  // 双前
+        case 1: left_.setTargetRadS(0);  right_.setTargetRadS(w);  break;  // 右转
+        case 2: left_.setTargetRadS(w);  right_.setTargetRadS(0);  break;  // 左转
+        case 3: left_.setTargetRadS(w);  right_.setTargetRadS(-w); break;  // 原地旋
+    }
+    vel_ = 0;
+    omega_ = 0;
+    yaw_ref_ = 0;
 }
 
 // ============================================================
@@ -199,7 +229,14 @@ void Chassis::dispatchMode_()
 
     if (web_mode_ == "DEBUG")
     {
-        handleDebug_();
+        if (wheel_debug_)
+        {
+            handleWheelDebug_();
+        }
+        else
+        {
+            handleDebug_();
+        }
     }
     else if (web_mode_ == "STOP")
     {
@@ -252,32 +289,74 @@ void Chassis::handleStop_()
 
 void Chassis::handleManual_()
 {
-    if (web_cmd_ == "LEFT")
+    if (pid_enabled_)
     {
-        man_ref_ += 1.57f * 0.01f * R2D;
-        wrapAngle_(man_ref_);
-    }
-    else if (web_cmd_ == "RIGHT")
-    {
-        man_ref_ -= 1.57f * 0.01f * R2D;
-        wrapAngle_(man_ref_);
-    }
-    yaw_ref_ = man_ref_;
-
-    if (web_cmd_ == "FWD")
-    {
-        vel_ = target_speed;
-    }
-    else if (web_cmd_ == "BACK")
-    {
-        vel_ = -target_speed;
+        // 编码器模式: 直接设轮速目标, 无 yaw 闭环
+        if (web_cmd_ == "FWD")
+        {
+            float w = target_speed / wheel_radius;
+            left_.setTargetRadS(w);
+            right_.setTargetRadS(w);
+            vel_ = target_speed;
+        }
+        else if (web_cmd_ == "BACK")
+        {
+            float w = -target_speed / wheel_radius;
+            left_.setTargetRadS(w);
+            right_.setTargetRadS(w);
+            vel_ = -target_speed;
+        }
+        else if (web_cmd_ == "LEFT")
+        {
+            left_.setTargetRadS(0);
+            right_.setTargetRadS(target_speed / wheel_radius);
+            vel_ = 0;
+        }
+        else if (web_cmd_ == "RIGHT")
+        {
+            left_.setTargetRadS(target_speed / wheel_radius);
+            right_.setTargetRadS(0);
+            vel_ = 0;
+        }
+        else
+        {
+            left_.setTargetRadS(0);
+            right_.setTargetRadS(0);
+            vel_ = 0;
+        }
+        omega_ = 0;
     }
     else
     {
-        vel_ = 0;
+        // 开环模式: yaw 角度闭环保持航向
+        if (web_cmd_ == "LEFT")
+        {
+            man_ref_ += 1.57f * 0.01f * R2D;
+            wrapAngle_(man_ref_);
+        }
+        else if (web_cmd_ == "RIGHT")
+        {
+            man_ref_ -= 1.57f * 0.01f * R2D;
+            wrapAngle_(man_ref_);
+        }
+        yaw_ref_ = man_ref_;
+
+        if (web_cmd_ == "FWD")
+        {
+            vel_ = target_speed;
+        }
+        else if (web_cmd_ == "BACK")
+        {
+            vel_ = -target_speed;
+        }
+        else
+        {
+            vel_ = 0;
+        }
+
+        omega_ = runYawPid_(yaw_ref_);
     }
 
-    omega_ = runYawPid_(yaw_ref_);
     auto_state_ = AUTO_LOCKED;
 }
 

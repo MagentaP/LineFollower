@@ -95,6 +95,7 @@ var pm=[
   ['W-KI','wki',0.05,0.01,0,3,'0.1'],
   ['W-KD','wkd',0.05,0.01,0,3,'0.0'],
   ['EncOn','pidon',1,1,0,1,'0'],
+  ['W-Dbg','wdbg',1,1,0,1,'0'],
   ['D-Ang','dang',5,0.5,-180,180,'0'],
   ['D-Spd','dspd',0.1,0.01,0.05,5,'1.0'],
 ];
@@ -328,6 +329,13 @@ void httpHandleSet()
             if (car)
             {
                 car->pid_enabled_ = (int)v > 0;
+            }
+        }
+        else if (k == "wdbg")
+        {
+            if (car)
+            {
+                car->wheel_debug_ = (int)v > 0;
             }
         }
         else if (k == "dang")
