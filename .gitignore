@@ -1,1 +1,6 @@
 .pio/
+.vscode/
+.vscode
+bom
+lib/
+test/
