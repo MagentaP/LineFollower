@@ -5,27 +5,28 @@
 class Encoder
 {
 public:
-    Encoder(int pin_a, int pin_b, int pcnt_unit_id)
+    Encoder(int pin_a, int pin_b, int unit_id)
     {
-        unit_ = (pcnt_unit_t)pcnt_unit_id;
+        unit_ = (pcnt_unit_t)unit_id;
 
         pcnt_config_t cfg;
-        memset(&cfg, 0, sizeof(cfg));
         cfg.pulse_gpio_num = pin_a;
         cfg.ctrl_gpio_num  = pin_b;
-        cfg.channel        = PCNT_CHANNEL_0;
-        cfg.unit           = unit_;
+        cfg.lctrl_mode     = PCNT_MODE_KEEP;
+        cfg.hctrl_mode     = PCNT_MODE_KEEP;
         cfg.pos_mode       = PCNT_COUNT_INC;
         cfg.neg_mode       = PCNT_COUNT_DEC;
         cfg.counter_h_lim  = 32767;
         cfg.counter_l_lim  = -32768;
+        cfg.unit           = unit_;
+        cfg.channel        = PCNT_CHANNEL_0;
 
         pcnt_unit_config(&cfg);
         pcnt_counter_pause(unit_);
         pcnt_counter_clear(unit_);
         pcnt_counter_resume(unit_);
 
-        accum_ = 0;
+        accum_   = 0;
         last_raw_ = 0;
     }
 
@@ -33,7 +34,7 @@ public:
     {
         int16_t raw = 0;
         pcnt_get_counter_value(unit_, &raw);
-        int delta = (int16_t)(raw - last_raw_);  // 有符号溢出自动回卷
+        int delta = (int16_t)(raw - last_raw_);
         last_raw_ = raw;
         accum_ += delta;
         return accum_;
@@ -48,10 +49,7 @@ public:
 
     float toRadS(int32_t delta, int cpr, float ratio, float dt)
     {
-        if (dt <= 0)
-        {
-            return 0;
-        }
+        if (dt <= 0) return 0;
         return (delta / (float)cpr) * 2.0f * PI * (1.0f / dt) / ratio;
     }
 
