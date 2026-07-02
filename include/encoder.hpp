@@ -9,23 +9,18 @@ public:
     {
         unit_ = (pcnt_unit_t)pcnt_unit_id;
 
-        pcnt_config_t cfg = {};
+        pcnt_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
         cfg.pulse_gpio_num = pin_a;
         cfg.ctrl_gpio_num  = pin_b;
         cfg.channel        = PCNT_CHANNEL_0;
         cfg.unit           = unit_;
-        // A 相上升沿: B 高 → 加, B 低 → 减
-        cfg.pos_mode = PCNT_COUNT_INC;
-        cfg.neg_mode = PCNT_COUNT_DEC;
-        cfg.counter_h_lim = 32767;
-        cfg.counter_l_lim = -32768;
+        cfg.pos_mode       = PCNT_COUNT_INC;
+        cfg.neg_mode       = PCNT_COUNT_DEC;
+        cfg.counter_h_lim  = 32767;
+        cfg.counter_l_lim  = -32768;
 
         pcnt_unit_config(&cfg);
-
-        // 滤波器 (过滤 < 4 个 APB 时钟的毛刺, ~50ns)
-        pcnt_set_filter_value(unit_, 4);
-        pcnt_filter_enable(unit_);
-
         pcnt_counter_pause(unit_);
         pcnt_counter_clear(unit_);
         pcnt_counter_resume(unit_);

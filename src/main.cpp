@@ -9,14 +9,18 @@ Chassis  chassis(left_motor, right_motor);
 void setup()
 {
     Serial.begin(115200);
-    delay(500);
+    delay(1000);
+    Serial.println("Boot begin");
 
     left_motor.begin(0);
     right_motor.begin(2);
     left_motor.beginEncoder(ENC1_A, ENC1_B, 0);
     right_motor.beginEncoder(ENC2_A, ENC2_B, 1);
+    Serial.println("Motors OK");
 
+    chassis.begin();
     car = &chassis;
+    Serial.println("Chassis OK");
 
     WiFi.softAP(WIFI_SSID, WIFI_PASS);
     server.on("/", httpHandleRoot);

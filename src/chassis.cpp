@@ -7,6 +7,11 @@ Chassis::Chassis(Motor& l, Motor& r)
       pid_yaw_(yaw_kp, yaw_ki, yaw_kd,
                -max_angular_velocity, max_angular_velocity, millis(), true)
 {
+    time_ms_ = millis();
+}
+
+void Chassis::begin()
+{
     imu_.begin();
     time_ms_ = millis();
 }

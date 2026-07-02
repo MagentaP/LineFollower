@@ -11,6 +11,7 @@ class Chassis
 {
 public:
     Chassis(Motor& l, Motor& r);
+    void begin();
 
     void setVelocity(float v, float w);
     void stop();
