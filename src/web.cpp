@@ -223,6 +223,7 @@ function poll(){
     chData.push({yr:d.yr||0,ya:d.yaw||0});while(chData.length>CHM)chData.shift();drawChart();
     dL.push({tgt:d.wlt||0,act:d.wlr||0});while(dL.length>DMAX)dL.shift();drawWheel(cL,cLC,dL,'L',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
     dR.push({tgt:d.wrt||0,act:d.wrr||0});while(dR.length>DMAX)dR.shift();drawWheel(cR,cRC,dR,'R',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
+    if(d.eraw){document.getElementById('imustat').textContent+=' Enc:'+d.eraw[0]+'/'+d.eraw[1];}
     if(d.r){var h='';for(var i=0;i<d.r.length;i++)h+='<span>S'+i+':'+d.r[i]+'</span>';document.getElementById('raws').innerHTML=h}
   });
 }
@@ -250,7 +251,8 @@ void httpHandleStatus()
         "\"q0\":%.4f,\"q1\":%.4f,\"q2\":%.4f,\"q3\":%.4f,"
         "\"imu\":%d,\"fall\":%d,"
         "\"bx\":%.6f,\"by\":%.6f,\"bz\":%.6f,"
-        "\"wlr\":%.3f,\"wlt\":%.3f,\"wrr\":%.3f,\"wrt\":%.3f}",
+        "\"wlr\":%.3f,\"wlt\":%.3f,\"wrr\":%.3f,\"wrt\":%.3f,"
+        "\"eraw\":[%d,%d]}",
         car->state_str_.c_str(), web_mode.c_str(),
         car->pos_, car->conf_, car->omega_, car->vel_,
         car->raw_buf_[0], car->raw_buf_[1], car->raw_buf_[2], car->raw_buf_[3],
@@ -258,7 +260,8 @@ void httpHandleStatus()
         s.q0, s.q1, s.q2, s.q3,
         s.ok ? 1 : 0, car->fallen_ ? 1 : 0,
         s.bias_x, s.bias_y, s.bias_z,
-        car->wl_rad_, car->wl_tgt_, car->wr_rad_, car->wr_tgt_);
+        car->wl_rad_, car->wl_tgt_, car->wr_rad_, car->wr_tgt_,
+        car->enc_raw_[0], car->enc_raw_[1]);
     server.send(200, "application/json", buf);
 }
 

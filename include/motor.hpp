@@ -85,6 +85,15 @@ public:
         target_rad_s_ = rps;
     }
 
+    int16_t getEncRaw() const
+    {
+        if (!has_encoder_)
+        {
+            return -1;
+        }
+        return enc_->raw();
+    }
+
     // 读取编码器, 更新 rad_s_ (供图表)
     void readEncoder(unsigned long now)
     {

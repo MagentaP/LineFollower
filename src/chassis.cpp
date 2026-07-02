@@ -174,6 +174,8 @@ void Chassis::updateMotors_()
     wr_rad_ = right_.rad_s_;
     wl_tgt_ = left_.target_rad_s_;
     wr_tgt_ = right_.target_rad_s_;
+    enc_raw_[0] = left_.has_encoder_ ? left_.getEncRaw() : -1;
+    enc_raw_[1] = right_.has_encoder_ ? right_.getEncRaw() : -1;
 
     // 仅当编码器 PID 开启时运行速度闭环
     if (pid_enabled_)

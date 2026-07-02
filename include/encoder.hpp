@@ -10,6 +10,7 @@ public:
         unit_ = (pcnt_unit_t)unit_id;
 
         pcnt_config_t cfg;
+        memset(&cfg, 0, sizeof(cfg));
         cfg.pulse_gpio_num = pin_a;
         cfg.ctrl_gpio_num  = pin_b;
         cfg.lctrl_mode     = PCNT_MODE_KEEP;
@@ -22,7 +23,6 @@ public:
         cfg.channel        = PCNT_CHANNEL_0;
 
         pcnt_unit_config(&cfg);
-        pcnt_counter_pause(unit_);
         pcnt_counter_clear(unit_);
         pcnt_counter_resume(unit_);
 
@@ -30,10 +30,16 @@ public:
         last_raw_ = 0;
     }
 
+    int16_t raw() const
+    {
+        int16_t v = 0;
+        pcnt_get_counter_value(unit_, &v);
+        return v;
+    }
+
     int32_t read()
     {
-        int16_t raw = 0;
-        pcnt_get_counter_value(unit_, &raw);
+        int16_t raw = raw();
         int delta = (int16_t)(raw - last_raw_);
         last_raw_ = raw;
         accum_ += delta;
