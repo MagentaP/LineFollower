@@ -33,6 +33,7 @@ public:
         if (encA >= 0 && encB >= 0 && pcntUnit >= 0)
         {
             enc_ = new Encoder(encA, encB, pcntUnit);
+            enc_->begin();
             has_encoder_ = true;
         }
     }
@@ -91,7 +92,7 @@ public:
         {
             return -1;
         }
-        return enc_->raw();
+        return enc_->rawValue();
     }
 
     // 读取编码器, 更新 rad_s_ (供图表)

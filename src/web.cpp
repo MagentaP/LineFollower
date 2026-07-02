@@ -223,7 +223,10 @@ function poll(){
     chData.push({yr:d.yr||0,ya:d.yaw||0});while(chData.length>CHM)chData.shift();drawChart();
     dL.push({tgt:d.wlt||0,act:d.wlr||0});while(dL.length>DMAX)dL.shift();drawWheel(cL,cLC,dL,'L',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
     dR.push({tgt:d.wrt||0,act:d.wrr||0});while(dR.length>DMAX)dR.shift();drawWheel(cR,cRC,dR,'R',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
-    if(d.eraw){document.getElementById('imustat').textContent+=' Enc:'+d.eraw[0]+'/'+d.eraw[1];}
+    if(d.eraw){
+        document.getElementById('bxv').textContent='L:'+d.wlr.toFixed(2)+' R:'+d.wrr.toFixed(2)+' rad/s';
+        document.getElementById('byv').textContent='Enc:'+d.eraw[0]+'/'+d.eraw[1];
+    }
     if(d.r){var h='';for(var i=0;i<d.r.length;i++)h+='<span>S'+i+':'+d.r[i]+'</span>';document.getElementById('raws').innerHTML=h}
   });
 }
