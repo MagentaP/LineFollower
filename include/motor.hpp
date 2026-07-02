@@ -113,6 +113,10 @@ public:
         enc_last_cnt_ = cnt;
 
         rad_s_ = enc_->toRadS(delta, ENC_CPR, GEAR_RATIO, dt);
+        if (reversed_)
+        {
+            rad_s_ = -rad_s_;
+        }
     }
 
     // 运行轮速 PID (仅在 encoder 闭环模式下调用)

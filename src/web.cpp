@@ -50,10 +50,10 @@ canvas{display:block}
 <div class="hf"><button class="gb bf" id="btnF">F</button><button class="gb bb" id="btnB">B</button></div>
 </div>
 <div style="background:#1a1a2e;border-radius:6px;padding:4px;margin-bottom:6px;text-align:center">
-<canvas id="axes" width="160" height="160" style="width:160px;height:160px"></canvas>
-<canvas id="chart" width="420" height="200" style="width:100%;height:200px"></canvas>
-<canvas id="chL" width="420" height="100" style="width:100%;height:100px"></canvas>
-<canvas id="chR" width="420" height="100" style="width:100%;height:100px"></canvas>
+<canvas id="axes" width="140" height="140" style="width:140px;height:140px"></canvas>
+<canvas id="chart" width="480" height="180" style="width:100%;height:180px"></canvas>
+<canvas id="chL" width="480" height="140" style="width:100%;height:140px"></canvas>
+<canvas id="chR" width="480" height="140" style="width:100%;height:140px"></canvas>
 </div>
 <div class="mr">
 <button class="mb ms mon" id="bs" onclick="setM('STOP')">STOP</button>
@@ -163,17 +163,17 @@ function drawChart(){
   chCtx.strokeStyle='#444';chCtx.beginPath();chCtx.moveTo(0,H/2);chCtx.lineTo(W,H/2);chCtx.stroke();
   function sy(v){return H-((v+185)/370)*H;}
   function sx(i){return(i/(CHM-1))*W;}
-  chCtx.strokeStyle='rgba(255,200,50,0.7)';chCtx.setLineDash([4,2]);chCtx.lineWidth=1.5;
+  chCtx.strokeStyle='rgba(255,200,50,0.7)';chCtx.setLineDash([4,2]);chCtx.lineWidth=2;
   chCtx.beginPath();
   for(var i=0;i<n;i++){var x=sx(i),y=sy(chData[i].yr||0);i==0?chCtx.moveTo(x,y):chCtx.lineTo(x,y);}
   chCtx.stroke();
-  chCtx.strokeStyle='#0f0';chCtx.setLineDash([]);chCtx.lineWidth=2;
+  chCtx.strokeStyle='#0f0';chCtx.setLineDash([]);chCtx.lineWidth=2.5;
   chCtx.beginPath();
   for(var i=0;i<n;i++){var x=sx(i),y=sy(chData[i].ya||0);i==0?chCtx.moveTo(x,y):chCtx.lineTo(x,y);}
   chCtx.stroke();chCtx.setLineDash([]);
-  chCtx.fillStyle='#fa0';chCtx.font='9px monospace';chCtx.fillText('ref',4,10);
-  chCtx.fillStyle='#0f0';chCtx.fillText('act',4,22);
-  chCtx.fillStyle='#888';chCtx.fillText('+180',2,12);chCtx.fillText('-180',2,H-4);chCtx.fillText('0',2,H/2+4);
+  chCtx.fillStyle='#fa0';chCtx.font='11px monospace';chCtx.fillText('ref',4,14);
+  chCtx.fillStyle='#0f0';chCtx.fillText('act',4,28);
+  chCtx.fillStyle='#888';chCtx.font='10px monospace';chCtx.fillText('+-180d',W-45,14);
 }
 
 // 左轮速度图
@@ -184,19 +184,21 @@ function drawWheel(cv,ctx,data,label,ymax){
   ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,W,H);
   if(n<2)return;
   ctx.strokeStyle='#444';ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
-  function sy(v){return H-(v/ymax)*H;}
+  var rng=ymax||1;
+  function sy(v){return H-((v+rng)/(2*rng))*H;}
   function sx(i){return(i/(DMAX-1))*W;}
-  ctx.strokeStyle='rgba(255,200,50,0.7)';ctx.setLineDash([4,2]);ctx.lineWidth=1.5;
+  ctx.strokeStyle='rgba(255,200,50,0.7)';ctx.setLineDash([4,2]);ctx.lineWidth=2;
   ctx.beginPath();
   for(var i=0;i<n;i++){var x=sx(i),y=sy(data[i].tgt||0);i==0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
   ctx.stroke();
-  ctx.strokeStyle='#0f0';ctx.setLineDash([]);ctx.lineWidth=2;
+  ctx.strokeStyle='#0f0';ctx.setLineDash([]);ctx.lineWidth=2.5;
   ctx.beginPath();
   for(var i=0;i<n;i++){var x=sx(i),y=sy(data[i].act||0);i==0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
   ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#fa0';ctx.font='9px monospace';ctx.fillText(label+' ref',4,10);
-  ctx.fillStyle='#0f0';ctx.fillText('act',4,22);
-  ctx.fillStyle='#888';ctx.fillText(ymax.toFixed(0)+' rad/s',W-50,10);
+  ctx.fillStyle='#fa0';ctx.font='11px monospace';ctx.fillText('ref',4,14);
+  ctx.fillStyle='#0f0';ctx.fillText('act',4,28);
+  ctx.fillStyle='#888';ctx.font='10px monospace';ctx.fillText(label,60,14);
+  ctx.fillText('+-'+rng.toFixed(0)+' rad/s',W-80,14);
 }
 
 // 右轮速度图
@@ -221,8 +223,14 @@ function poll(){
     document.getElementById('bzv').textContent=d.bz.toFixed(6);
     if(d.imu&&d.q0)drawAxes([d.q0,d.q1,d.q2,d.q3]);
     chData.push({yr:d.yr||0,ya:d.yaw||0});while(chData.length>CHM)chData.shift();drawChart();
-    dL.push({tgt:d.wlt||0,act:d.wlr||0});while(dL.length>DMAX)dL.shift();drawWheel(cL,cLC,dL,'L',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
-    dR.push({tgt:d.wrt||0,act:d.wrr||0});while(dR.length>DMAX)dR.shift();drawWheel(cR,cRC,dR,'R',Math.max(1,parseFloat(document.getElementById('mwV')?document.getElementById('mwV').textContent:20)));
+    dL.push({tgt:d.wlt||0,act:d.wlr||0});while(dL.length>DMAX)dL.shift();
+    dR.push({tgt:d.wrt||0,act:d.wrr||0});while(dR.length>DMAX)dR.shift();
+    // 自动缩放: 取 1.5 倍最大值
+    var wMax=1;
+    for(var i=0;i<dL.length;i++){wMax=Math.max(wMax,Math.abs(dL[i].tgt||0),Math.abs(dL[i].act||0),Math.abs(dR[i]?dR[i].tgt:0),Math.abs(dR[i]?dR[i].act:0));}
+    wMax=Math.max(wMax*1.5,5);
+    drawWheel(cL,cLC,dL,'L '+d.wlr.toFixed(1)+'/'+(d.wlt||0).toFixed(1),wMax);
+    drawWheel(cR,cRC,dR,'R '+d.wrr.toFixed(1)+'/'+(d.wrt||0).toFixed(1),wMax);
     if(d.eraw){
         document.getElementById('bxv').textContent='L:'+d.wlr.toFixed(2)+' R:'+d.wrr.toFixed(2)+' rad/s';
         document.getElementById('byv').textContent='Enc:'+d.eraw[0]+'/'+d.eraw[1];
