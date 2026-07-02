@@ -165,6 +165,10 @@ void Chassis::updateMotors_()
         unsigned long now = millis();
         left_.updateSpeed(now);
         right_.updateSpeed(now);
+        wl_rad_ = left_.rad_s_;
+        wr_rad_ = right_.rad_s_;
+        wl_tgt_ = left_.target_rad_s_;
+        wr_tgt_ = right_.target_rad_s_;
     }
 }
 

@@ -82,7 +82,7 @@ public:
         target_rad_s_ = rps;
     }
 
-    // 读取编码器并计算轮速，根据 has_encoder_ 决定是否运行速度 PID
+    // 读取编码器并计算轮速
     void updateSpeed(unsigned long now)
     {
         if (!has_encoder_)
@@ -103,6 +103,10 @@ public:
         last_cnt = cnt;
 
         rad_s_ = enc_->toRadS(delta, ENC_CPR, GEAR_RATIO, dt);
+
+        pid_speed_.kp_ = wheel_kp;
+        pid_speed_.ki_ = wheel_ki;
+        pid_speed_.kd_ = wheel_kd;
 
         float ctrl = pid_speed_.update(target_rad_s_ - rad_s_, now);
         setDuty(ctrl);

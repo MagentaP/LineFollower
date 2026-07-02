@@ -26,6 +26,8 @@ public:
 
     // 只读状态
     float pos_ = 0, conf_ = 0, omega_ = 0, vel_ = 0, yaw_ref_ = 0;
+    float wl_rad_ = 0, wr_rad_ = 0;        // 左右轮实际转速 (rad/s)
+    float wl_tgt_ = 0, wr_tgt_ = 0;        // 左右轮目标转速 (rad/s)
     String state_str_ = "LOCKED";
     bool fallen_ = false;
     const ImuState& imuState() const { return imu_state_; }
