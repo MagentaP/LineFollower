@@ -16,6 +16,15 @@ Chassis::Chassis(Motor& l, Motor& r)
 // ============================================================
 void Chassis::setVelocity(float v, float w)
 {
+    if (pid_enabled_ && left_.has_encoder_ && right_.has_encoder_)
+    {
+        float vl = v - w * wheel_dist / 2.0f;
+        float vr = v + w * wheel_dist / 2.0f;
+        left_.setTargetRadS(vl / wheel_radius);
+        right_.setTargetRadS(vr / wheel_radius);
+        return;
+    }
+
     float vl = v - w * wheel_dist / 2.0f;
     float vr = v + w * wheel_dist / 2.0f;
     float dl = (vl / wheel_radius) / max_wheel_velocity * max_duty;
@@ -78,6 +87,7 @@ void Chassis::chassisTask()
     }
     tCtrl = millis();
 
+    updateMotors_();
     syncPid_();
     dispatchMode_();
     applyOutput_();
@@ -146,6 +156,16 @@ void Chassis::syncPid_()
     pid_yaw_.kd_ = yaw_kd;
     pid_yaw_.i_limit_ = yaw_i_limit;
     pid_yaw_.o_limit_ = max_angular_velocity;
+}
+
+void Chassis::updateMotors_()
+{
+    if (pid_enabled_)
+    {
+        unsigned long now = millis();
+        left_.updateSpeed(now);
+        right_.updateSpeed(now);
+    }
 }
 
 void Chassis::applyOutput_()

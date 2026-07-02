@@ -2,8 +2,8 @@
 #include "chassis.hpp"
 #include "web.hpp"
 
-Motor    left_motor(M1_IN1, M1_IN2, true);
-Motor    right_motor(M2_IN1, M2_IN2, true);
+Motor    left_motor(M1_IN1, M1_IN2, true, ENC1_A, ENC1_B, 0);
+Motor    right_motor(M2_IN1, M2_IN2, true, ENC2_A, ENC2_B, 1);
 Chassis  chassis(left_motor, right_motor);
 
 void setup()
