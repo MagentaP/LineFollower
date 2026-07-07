@@ -23,14 +23,9 @@ public:
     String web_cmd_ = "STOP";
     float debug_angle_ = 0;
     float debug_speed_ = 0;
-    bool  pid_enabled_ = false;  // 编码器轮速 PID 开关
-    bool  wheel_debug_ = false;  // 轮速 PID 调试模式
 
     // 只读状态
     float pos_ = 0, conf_ = 0, omega_ = 0, vel_ = 0, yaw_ref_ = 0;
-    float wl_rad_ = 0, wr_rad_ = 0;        // 左右轮实际转速 (rad/s)
-    float wl_tgt_ = 0, wr_tgt_ = 0;        // 左右轮目标转速 (rad/s)
-    int16_t enc_raw_[2] = {};              // 编码器原始计数 (调试)
     String state_str_ = "LOCKED";
     bool fallen_ = false;
     const ImuState& imuState() const { return imu_state_; }
@@ -57,15 +52,12 @@ private:
     void updateSensor_();
     bool checkFall_();
     void syncPid_();
-    void updateMotors_();
     void dispatchMode_();
-    void applyOutput_();
 
     // 模式处理
     void handleDebug_();
     void handleStop_();
     void handleManual_();
-    void handleWheelDebug_();
     void handleAuto_();
 
     // AUTO 子状态

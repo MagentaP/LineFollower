@@ -14,8 +14,6 @@ void setup()
 
     left_motor.begin(0);
     right_motor.begin(2);
-    left_motor.beginEncoder(ENC1_A, ENC1_B, 0);
-    right_motor.beginEncoder(ENC2_A, ENC2_B, 1);
     Serial.println("Motors OK");
 
     chassis.begin();

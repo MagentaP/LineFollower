@@ -22,9 +22,6 @@ extern int   lost_recovery_timeout_ms;
 extern float yaw_kp, yaw_ki, yaw_kd;
 extern float yaw_i_limit;
 
-// 轮速 PID (编码器闭环)
-extern float wheel_kp, wheel_ki, wheel_kd;
-
 // 常量
 const int SENSOR_PINS[] = {33, 32, 35, 34};
 const int NUM_SENSORS = 4;

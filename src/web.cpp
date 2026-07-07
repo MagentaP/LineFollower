@@ -51,9 +51,7 @@ canvas{display:block}
 </div>
 <div style="background:#1a1a2e;border-radius:6px;padding:4px;margin-bottom:6px;text-align:center">
 <canvas id="axes" width="140" height="140" style="width:140px;height:140px"></canvas>
-<canvas id="chart" width="480" height="180" style="width:100%;height:180px"></canvas>
-<canvas id="chL" width="480" height="140" style="width:100%;height:140px"></canvas>
-<canvas id="chR" width="480" height="140" style="width:100%;height:140px"></canvas>
+<canvas id="chart" width="480" height="220" style="width:100%;height:220px"></canvas>
 </div>
 <div class="mr">
 <button class="mb ms mon" id="bs" onclick="setM('STOP')">STOP</button>
@@ -91,11 +89,6 @@ var pm=[
   ['YA-KI','yaki',0.5,0.05,0,30,'1.0'],
   ['YA-KD','yakd',0.5,0.05,0,30,'0.8'],
   ['YA-IL','yailim',1,0.1,0.5,50,'10.0'],
-  ['W-KP','wkp',0.2,0.05,0,10,'2.0'],
-  ['W-KI','wki',0.05,0.01,0,3,'0.1'],
-  ['W-KD','wkd',0.05,0.01,0,3,'0.0'],
-  ['EncOn','pidon',1,1,0,1,'0'],
-  ['W-Dbg','wdbg',1,1,0,1,'0'],
   ['D-Ang','dang',5,0.5,-180,180,'0'],
   ['D-Spd','dspd',0.1,0.01,0.05,5,'1.0'],
 ];
@@ -176,34 +169,6 @@ function drawChart(){
   chCtx.fillStyle='#888';chCtx.font='10px monospace';chCtx.fillText('+-180d',W-45,14);
 }
 
-// 左轮速度图
-var cL=document.getElementById('chL'),cLC=cL.getContext('2d');
-var dL=[], DMAX=100;
-function drawWheel(cv,ctx,data,label,ymax){
-  var W=cv.width,H=cv.height,n=data.length;
-  ctx.fillStyle='#1a1a2e';ctx.fillRect(0,0,W,H);
-  if(n<2)return;
-  ctx.strokeStyle='#444';ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
-  var rng=ymax||1;
-  function sy(v){return H-((v+rng)/(2*rng))*H;}
-  function sx(i){return(i/(DMAX-1))*W;}
-  ctx.strokeStyle='rgba(255,200,50,0.7)';ctx.setLineDash([4,2]);ctx.lineWidth=2;
-  ctx.beginPath();
-  for(var i=0;i<n;i++){var x=sx(i),y=sy(data[i].tgt||0);i==0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-  ctx.stroke();
-  ctx.strokeStyle='#0f0';ctx.setLineDash([]);ctx.lineWidth=2.5;
-  ctx.beginPath();
-  for(var i=0;i<n;i++){var x=sx(i),y=sy(data[i].act||0);i==0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
-  ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#fa0';ctx.font='11px monospace';ctx.fillText('ref',4,14);
-  ctx.fillStyle='#0f0';ctx.fillText('act',4,28);
-  ctx.fillStyle='#888';ctx.font='10px monospace';ctx.fillText(label,60,14);
-  ctx.fillText('+-'+rng.toFixed(0)+' rad/s',W-80,14);
-}
-
-// 右轮速度图
-var cR=document.getElementById('chR'),cRC=cR.getContext('2d');
-var dR=[];
 function poll(){
   fetch('/status').then(function(r){return r.json()}).then(function(d){
     document.getElementById('st').textContent=d.s;document.getElementById('md').textContent=d.m;
@@ -223,18 +188,6 @@ function poll(){
     document.getElementById('bzv').textContent=d.bz.toFixed(6);
     if(d.imu&&d.q0)drawAxes([d.q0,d.q1,d.q2,d.q3]);
     chData.push({yr:d.yr||0,ya:d.yaw||0});while(chData.length>CHM)chData.shift();drawChart();
-    dL.push({tgt:d.wlt||0,act:d.wlr||0});while(dL.length>DMAX)dL.shift();
-    dR.push({tgt:d.wrt||0,act:d.wrr||0});while(dR.length>DMAX)dR.shift();
-    // 自动缩放: 取 1.5 倍最大值
-    var wMax=1;
-    for(var i=0;i<dL.length;i++){wMax=Math.max(wMax,Math.abs(dL[i].tgt||0),Math.abs(dL[i].act||0),Math.abs(dR[i]?dR[i].tgt:0),Math.abs(dR[i]?dR[i].act:0));}
-    wMax=Math.max(wMax*1.5,5);
-    drawWheel(cL,cLC,dL,'L '+d.wlr.toFixed(1)+'/'+(d.wlt||0).toFixed(1),wMax);
-    drawWheel(cR,cRC,dR,'R '+d.wrr.toFixed(1)+'/'+(d.wrt||0).toFixed(1),wMax);
-    if(d.eraw){
-        document.getElementById('bxv').textContent='L:'+d.wlr.toFixed(2)+' R:'+d.wrr.toFixed(2)+' rad/s';
-        document.getElementById('byv').textContent='Enc:'+d.eraw[0]+'/'+d.eraw[1];
-    }
     if(d.r){var h='';for(var i=0;i<d.r.length;i++)h+='<span>S'+i+':'+d.r[i]+'</span>';document.getElementById('raws').innerHTML=h}
   });
 }
@@ -261,18 +214,14 @@ void httpHandleStatus()
         "\"roll\":%.1f,\"pitch\":%.1f,\"yaw\":%.1f,\"gz\":%.3f,\"yr\":%.3f,"
         "\"q0\":%.4f,\"q1\":%.4f,\"q2\":%.4f,\"q3\":%.4f,"
         "\"imu\":%d,\"fall\":%d,"
-        "\"bx\":%.6f,\"by\":%.6f,\"bz\":%.6f,"
-        "\"wlr\":%.3f,\"wlt\":%.3f,\"wrr\":%.3f,\"wrt\":%.3f,"
-        "\"eraw\":[%d,%d]}",
+        "\"bx\":%.6f,\"by\":%.6f,\"bz\":%.6f}",
         car->state_str_.c_str(), web_mode.c_str(),
         car->pos_, car->conf_, car->omega_, car->vel_,
         car->raw_buf_[0], car->raw_buf_[1], car->raw_buf_[2], car->raw_buf_[3],
         s.roll, s.pitch, s.yaw, s.gyro_z, car->yaw_ref_,
         s.q0, s.q1, s.q2, s.q3,
         s.ok ? 1 : 0, car->fallen_ ? 1 : 0,
-        s.bias_x, s.bias_y, s.bias_z,
-        car->wl_rad_, car->wl_tgt_, car->wr_rad_, car->wr_tgt_,
-        car->enc_raw_[0], car->enc_raw_[1]);
+        s.bias_x, s.bias_y, s.bias_z);
     server.send(200, "application/json", buf);
 }
 
@@ -325,32 +274,6 @@ void httpHandleSet()
         else if (k == "yailim")
         {
             yaw_i_limit = v;
-        }
-        else if (k == "wkp")
-        {
-            wheel_kp = v;
-        }
-        else if (k == "wki")
-        {
-            wheel_ki = v;
-        }
-        else if (k == "wkd")
-        {
-            wheel_kd = v;
-        }
-        else if (k == "pidon")
-        {
-            if (car)
-            {
-                car->pid_enabled_ = (int)v > 0;
-            }
-        }
-        else if (k == "wdbg")
-        {
-            if (car)
-            {
-                car->wheel_debug_ = (int)v > 0;
-            }
         }
         else if (k == "dang")
         {
