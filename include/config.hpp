@@ -18,9 +18,16 @@ extern float line_confidence_threshold;
 extern int   gap_grace_ms;
 extern int   lost_recovery_timeout_ms;
 
-// yaw 角度 PID
+// yaw 角度 PID (DEBUG 模式)
 extern float yaw_kp, yaw_ki, yaw_kd;
 extern float yaw_i_limit;
+
+// 位置 PID (AUTO 模式, 直接 pos → ω)
+extern float pos_kp, pos_ki, pos_kd;
+extern float pos_i_limit;
+
+// 弯道减速
+extern float turn_slow;
 
 // 常量
 const int SENSOR_PINS[] = {33, 32, 35, 34};

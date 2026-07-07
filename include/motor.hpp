@@ -119,21 +119,6 @@ public:
         }
     }
 
-    // 运行轮速 PID (仅在 encoder 闭环模式下调用)
-    void runSpeedPid(unsigned long now)
-    {
-        if (!has_encoder_)
-        {
-            return;
-        }
-        pid_speed_.kp_ = wheel_kp;
-        pid_speed_.ki_ = wheel_ki;
-        pid_speed_.kd_ = wheel_kd;
-
-        float ctrl = pid_speed_.update(target_rad_s_ - rad_s_, now);
-        setDuty(ctrl);
-    }
-
     void stop()
     {
         target_rad_s_ = 0;

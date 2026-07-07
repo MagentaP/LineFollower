@@ -81,10 +81,15 @@ var pm=[
   ['Speed','speed',0.2,0.02,0.05,10,'1.0'],
   ['Max w','maxw',1,0.1,0.5,40,'6.0'],
   ['Max%','maxduty',10,2,10,100,'80'],
-  ['Bias','bias',1,0.1,-50,50,'20.0'],
+  ['Bias','bias',1,0.1,0,50,'20.0'],
+  ['T-Slo','turnslow',0.05,0.01,0,1,'0.6'],
   ['Gap','gap',100,20,0,10000,'500'],
   ['Lost','ltime',200,50,0,10000,'1000'],
   ['Conf','conf',0.1,0.01,0.01,1,'0.15'],
+  ['Pos-KP','poskp',0.5,0.05,0,20,'4.0'],
+  ['Pos-KI','poski',0.2,0.02,0,10,'2.0'],
+  ['Pos-KD','poskd',0.1,0.02,0,5,'0.0'],
+  ['Pos-IL','posilim',0.5,0.1,0.5,20,'4.0'],
   ['YA-KP','yakp',1,0.1,0,50,'10.0'],
   ['YA-KI','yaki',0.5,0.05,0,30,'1.0'],
   ['YA-KD','yakd',0.5,0.05,0,30,'0.8'],
@@ -247,6 +252,10 @@ void httpHandleSet()
         {
             duty_bias = v;
         }
+        else if (k == "turnslow")
+        {
+            turn_slow = v;
+        }
         else if (k == "gap")
         {
             gap_grace_ms = (int)v;
@@ -274,6 +283,22 @@ void httpHandleSet()
         else if (k == "yailim")
         {
             yaw_i_limit = v;
+        }
+        else if (k == "poskp")
+        {
+            pos_kp = v;
+        }
+        else if (k == "poski")
+        {
+            pos_ki = v;
+        }
+        else if (k == "poskd")
+        {
+            pos_kd = v;
+        }
+        else if (k == "posilim")
+        {
+            pos_i_limit = v;
         }
         else if (k == "dang")
         {

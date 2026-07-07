@@ -3,7 +3,7 @@
 #include "web.hpp"
 
 Motor    left_motor(M1_IN1, M1_IN2, true);
-Motor    right_motor(M2_IN1, M2_IN2, true);
+Motor    right_motor(M2_IN1, M2_IN2, false);
 Chassis  chassis(left_motor, right_motor);
 
 void setup()
