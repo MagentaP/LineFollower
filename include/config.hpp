@@ -29,6 +29,9 @@ extern float pos_i_limit;
 // 弯道减速
 extern float turn_slow;
 
+// 转弯额外偏置 (差速下限)
+extern float turn_bias;
+
 // 常量
 const int SENSOR_PINS[] = {33, 32, 35, 34};
 const int NUM_SENSORS = 4;

@@ -6,7 +6,7 @@ Chassis* car = nullptr;
 String  web_mode = "STOP";
 String  web_cmd = "STOP";
 float   web_debug_angle = 0.0f;
-float   web_debug_speed = 1.0f;
+float   web_debug_speed = 0.05f;
 unsigned long web_cmd_time = 0;
 
 const char HTML_PAGE[] = R"HTMLEND(<!DOCTYPE html><html lang="zh"><head>
@@ -40,6 +40,7 @@ canvas{display:block}
 <h1>ESP32 Car</h1>
 <div id="bar"><div class="row"><span>State</span><span class="v" id="st">-</span><span>Mode</span><span class="v" id="md">-</span></div>
 <div class="row"><span>Pos</span><span class="v" id="ps">-</span><span>Conf</span><span class="v" id="cf">-</span><span>w</span><span class="v" id="om">-</span><span>V</span><span class="v" id="lv">-</span></div>
+<div class="row"><span>DutyL</span><span class="v" id="dl">-</span><span>DutyR</span><span class="v" id="dr">-</span></div>
 <div class="row"><span>Roll</span><span class="v" id="rl">-</span><span>Pitch</span><span class="v" id="ph">-</span><span>Yaw</span><span class="v" id="yw">-</span><span>GZ</span><span class="v" id="gz">-</span></div>
 <div class="row"><span>YawRef</span><span class="v" id="yrv">-</span><span>YawAct</span><span class="v" id="yav">-</span></div>
 <div><span id="imustat" style="color:#888;font-size:10px">IMU?</span></div>
@@ -78,24 +79,26 @@ setInterval(function(){
   fetch('/man?cmd='+c);
 },80);
 var pm=[
-  ['Speed','speed',0.2,0.02,0.05,10,'1.0'],
-  ['Max w','maxw',1,0.1,0.5,40,'6.0'],
-  ['Max%','maxduty',10,2,10,100,'80'],
-  ['Bias','bias',1,0.1,0,50,'20.0'],
-  ['T-Slo','turnslow',0.05,0.01,0,1,'0.6'],
-  ['Gap','gap',100,20,0,10000,'500'],
-  ['Lost','ltime',200,50,0,10000,'1000'],
-  ['Conf','conf',0.1,0.01,0.01,1,'0.15'],
-  ['Pos-KP','poskp',0.5,0.05,0,20,'4.0'],
-  ['Pos-KI','poski',0.2,0.02,0,10,'2.0'],
-  ['Pos-KD','poskd',0.1,0.02,0,5,'0.0'],
-  ['Pos-IL','posilim',0.5,0.1,0.5,20,'4.0'],
-  ['YA-KP','yakp',1,0.1,0,50,'10.0'],
-  ['YA-KI','yaki',0.5,0.05,0,30,'1.0'],
-  ['YA-KD','yakd',0.5,0.05,0,30,'0.8'],
-  ['YA-IL','yailim',1,0.1,0.5,50,'10.0'],
-  ['D-Ang','dang',5,0.5,-180,180,'0'],
-  ['D-Spd','dspd',0.1,0.01,0.05,5,'1.0'],
+  ['Speed','speed',0.01,0.004,0.05,5,'0.15'],
+  ['Max w','maxw',0.2,0.02,0.5,40,'6.0'],
+  ['MaxWhl','maxwhl',1,0.2,1,60,'6.0'],
+  ['Max%','maxduty',2,0.4,10,100,'80'],
+  ['Bias','bias',0.2,0.02,0,50,'20.0'],
+  ['T-Slo','turnslow',0.02,0.01,0,5,'4.5'],
+  ['T-Bia','turnbias',0.2,0.04,0,60,'0'],
+  ['Gap','gap',20,4,0,10000,'250'],
+  ['Lost','ltime',40,10,0,10000,'1000'],
+  ['Conf','conf',0.02,0.002,0.01,1,'0.15'],
+  ['Pos-KP','poskp',0.1,0.01,0,20,'0.5'],
+  ['Pos-KI','poski',0.04,0.004,0,10,'0.0'],
+  ['Pos-KD','poskd',0.2,0.02,0,50,'40.0'],
+  ['Pos-IL','posilim',0.1,0.02,0.5,20,'4.0'],
+  ['YA-KP','yakp',0.2,0.02,0,50,'1.2'],
+  ['YA-KI','yaki',0.1,0.01,0,30,'0.0'],
+  ['YA-KD','yakd',0.2,0.02,0,50,'0.1'],
+  ['YA-IL','yailim',0.2,0.02,0.5,50,'10.0'],
+  ['D-Ang','dang',1,0.1,-180,180,'0'],
+  ['D-Spd','dspd',0.02,0.002,0.05,5,'0.05'],
 ];
 var tc=document.getElementById('tune'), decs={};
 pm.forEach(function(p){
@@ -179,6 +182,7 @@ function poll(){
     document.getElementById('st').textContent=d.s;document.getElementById('md').textContent=d.m;
     document.getElementById('ps').textContent=d.p.toFixed(2);document.getElementById('cf').textContent=d.c.toFixed(2);
     document.getElementById('om').textContent=d.w.toFixed(3);document.getElementById('lv').textContent=d.v.toFixed(3);
+    document.getElementById('dl').textContent=(d.dl||0).toFixed(1);document.getElementById('dr').textContent=(d.dr||0).toFixed(1);
     document.getElementById('rl').textContent=d.roll.toFixed(1)+'d';
     document.getElementById('ph').textContent=d.pitch.toFixed(1)+'d';
     document.getElementById('yw').textContent=d.yaw.toFixed(1)+'d';
@@ -215,6 +219,7 @@ void httpHandleStatus()
     char buf[640];
     snprintf(buf, sizeof(buf),
         "{\"s\":\"%s\",\"m\":\"%s\",\"p\":%.3f,\"c\":%.3f,\"w\":%.4f,\"v\":%.4f,"
+        "\"dl\":%.1f,\"dr\":%.1f,"
         "\"r\":[%d,%d,%d,%d],"
         "\"roll\":%.1f,\"pitch\":%.1f,\"yaw\":%.1f,\"gz\":%.3f,\"yr\":%.3f,"
         "\"q0\":%.4f,\"q1\":%.4f,\"q2\":%.4f,\"q3\":%.4f,"
@@ -222,6 +227,7 @@ void httpHandleStatus()
         "\"bx\":%.6f,\"by\":%.6f,\"bz\":%.6f}",
         car->state_str_.c_str(), web_mode.c_str(),
         car->pos_, car->conf_, car->omega_, car->vel_,
+        car->duty_l_, car->duty_r_,
         car->raw_buf_[0], car->raw_buf_[1], car->raw_buf_[2], car->raw_buf_[3],
         s.roll, s.pitch, s.yaw, s.gyro_z, car->yaw_ref_,
         s.q0, s.q1, s.q2, s.q3,
@@ -244,6 +250,10 @@ void httpHandleSet()
         {
             max_angular_velocity = v;
         }
+        else if (k == "maxwhl")
+        {
+            max_wheel_velocity = v;
+        }
         else if (k == "maxduty")
         {
             max_duty = v;
@@ -255,6 +265,10 @@ void httpHandleSet()
         else if (k == "turnslow")
         {
             turn_slow = v;
+        }
+        else if (k == "turnbias")
+        {
+            turn_bias = v;
         }
         else if (k == "gap")
         {

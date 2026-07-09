@@ -22,6 +22,7 @@ public:
     float debug_angle_ = 0;
     float debug_speed_ = 0;
     float pos_ = 0, conf_ = 0, omega_ = 0, vel_ = 0, yaw_ref_ = 0;
+    float duty_l_ = 0, duty_r_ = 0;
     String state_str_ = "LOCKED";
     bool fallen_ = false;
     const ImuState& imuState() const { return imu_state_; }

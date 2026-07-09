@@ -25,14 +25,31 @@ void Chassis::setVelocity(float v, float w)
     float dl = (vl / wheel_radius) / max_wheel_velocity * max_duty;
     float dr = (vr / wheel_radius) / max_wheel_velocity * max_duty;
 
-    float am = max(fabs(dl), fabs(dr));
-    if (am > max_duty) { dl *= max_duty / am; dr *= max_duty / am; }
-    if (am < duty_bias && am > 0.01f) { dl *= duty_bias / am; dr *= duty_bias / am; }
+    // 转弯差速偏置: 叠加到差速上 (而非保底)
+    if (turn_bias > 0.01f && fabs(w) > 0.01f)
+    {
+        float sgn = (w > 0) ? 1.0f : -1.0f;
+        dl -= sgn * turn_bias / 2.0f;
+        dr += sgn * turn_bias / 2.0f;
+    }
+
+    // 差速保持式饱和: 超限时整体平移 (不按比例缩放), 保住转向权
+    float hi = max(dl, dr);
+    float lo = min(dl, dr);
+    if (hi > max_duty)  { float s = hi - max_duty;  dl -= s; dr -= s; }
+    lo = min(dl, dr);
+    if (lo < -max_duty) { float s = -max_duty - lo; dl += s; dr += s; }
+    if (dl > max_duty) dl = max_duty;   if (dl < -max_duty) dl = -max_duty;
+    if (dr > max_duty) dr = max_duty;   if (dr < -max_duty) dr = -max_duty;
+
+    // 死区: 保证最小启动占空比
     if (dl > 0 && dl < duty_bias) dl = duty_bias;
     if (dl < 0 && dl > -duty_bias) dl = -duty_bias;
     if (dr > 0 && dr < duty_bias) dr = duty_bias;
     if (dr < 0 && dr > -duty_bias) dr = -duty_bias;
 
+    duty_l_ = dl;
+    duty_r_ = dr;
     left_.setDuty(dl);
     right_.setDuty(dr);
 }
@@ -176,12 +193,12 @@ float Chassis::runPosPid_(float pos, float dt)
 
     // 增益调度 + 积分衰减
     float ekp, eki, ekd;
-    if (absE < 0.20f)
+    if (absE < 0.10f)
     {
         pos_integral_ *= 0.85f;
         ekp = pos_kp * 0.25f; eki = pos_ki * 0.1f; ekd = pos_kd * 0.3f;
     }
-    else if (absE < 0.50f)
+    else if (absE < 0.35f)
     {
         ekp = pos_kp; eki = pos_ki; ekd = pos_kd;
     }
@@ -205,8 +222,8 @@ float Chassis::runPosPid_(float pos, float dt)
 
 float Chassis::autoSpeed_(float omega)
 {
-    float s = target_speed * (1.0f - turn_slow * fabs(omega) / max_angular_velocity);
-    if (s < 0.15f) s = 0.15f;
+    float s = target_speed / (1.0f + turn_slow * fabs(omega) / max_angular_velocity);
+    if (s < 0.05f) s = 0.05f;
     return s;
 }
 
@@ -239,9 +256,18 @@ void Chassis::autoGap_()
         return;
     }
 
+    // 宽限时间随"最后一次线的位置"缩放:
+    //   线在中间(|last_pos|小) → 基本确定还在线上, 大幅延长宽限
+    //   线在边缘(|last_pos|→1) → 可能真冲出去了, 缩短宽限
+    // central=1(正中)→×4, central=0(边缘)→×1
+    float central = 1.0f - fabs(last_pos_);
+    if (central < 0) central = 0;
+    float posScale = 1.0f + 3.0f * central;
+
     bool maybe = false;
     for (int i = 1; i <= 2; i++) if (raw_buf_[i] > 1200) maybe = true;
-    unsigned long grace = maybe ? (unsigned long)gap_grace_ms * 3U : (unsigned long)gap_grace_ms;
+    unsigned long grace = (unsigned long)(gap_grace_ms * posScale);
+    if (maybe) grace *= 3U;
 
     if (millis() - gap_time_ < grace)
     {
