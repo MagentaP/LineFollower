@@ -179,6 +179,7 @@ void Chassis::handleAuto_()
     switch (auto_state_)
     {
         case AUTO_NORMAL: autoNormal_(); break;
+        case AUTO_BLIND:  autoBlind_();  break;
         case AUTO_GAP:    autoGap_();    break;
         case AUTO_LOST:   autoLost_();   break;
         case AUTO_LOCKED: autoLocked_(); break;
@@ -236,11 +237,76 @@ void Chassis::autoNormal_()
         last_omega_ = omega_;
         vel_ = autoSpeed_(omega_);
     }
+    else if (fabs(last_pos_) < BLIND_SAFE_POS)
+    {
+        // 最后在内侧传感器 → 线一定还在阵列下, 只是进了盲区
+        // 用 IMU 推算继续正常跑, 不限时, 不重置 PID
+        auto_state_ = AUTO_BLIND;
+        pred_pos_ = last_pos_;
+        autoBlind_();
+    }
     else
+    {
+        // 最后在边缘 → 线可能真冲出去了
+        enterAutoState_(AUTO_GAP);
+        last_omega_ = (omega_ = last_omega_ * 0.5f);
+        vel_ = target_speed * 0.3f;
+    }
+}
+
+void Chassis::autoBlind_()
+{
+    if (conf_ >= 0.6f)
+    {
+        auto_state_ = AUTO_NORMAL;
+        last_pos_ = pos_;
+        omega_ = runPosPid_(pos_, 0.01f);
+        last_omega_ = omega_;
+        vel_ = autoSpeed_(omega_);
+        return;
+    }
+
+    float dy = (imu_state_.gyro_z) * 0.01f;
+    pred_pos_ += blind_pred_gain * dy;
+    if (pred_pos_ > 1.0f) pred_pos_ = 1.0f;
+    if (pred_pos_ < -1.0f) pred_pos_ = -1.0f;
+
+    if (fabs(pred_pos_) >= 1.0f)
     {
         enterAutoState_(AUTO_GAP);
         last_omega_ = (omega_ = last_omega_ * 0.5f);
         vel_ = target_speed * 0.3f;
+    }
+    else
+    {
+        // 确定没丢线, 按预测位置正常跑 (跟 NORMAL 一样: P+I 出 ω, autoSpeed 出速度)
+        float error = -pred_pos_;
+        float absE = fabs(pred_pos_);
+
+        float ekp, eki;
+        if (absE < 0.10f)
+        {
+            pos_integral_ *= 0.85f;
+            ekp = pos_kp * 0.25f; eki = pos_ki * 0.1f;
+        }
+        else if (absE < 0.35f)
+        {
+            ekp = pos_kp; eki = pos_ki;
+        }
+        else
+        {
+            ekp = pos_kp * 1.4f; eki = pos_ki * 1.2f;
+        }
+
+        pos_integral_ += error * 0.01f;
+        if (pos_integral_ > pos_i_limit)  pos_integral_ = pos_i_limit;
+        if (pos_integral_ < -pos_i_limit) pos_integral_ = -pos_i_limit;
+
+        float w = ekp * error + eki * pos_integral_;
+        if (w > max_angular_velocity)  w = max_angular_velocity;
+        if (w < -max_angular_velocity) w = -max_angular_velocity;
+        omega_ = w;
+        vel_ = autoSpeed_(omega_);
     }
 }
 
@@ -346,6 +412,7 @@ String Chassis::autoStateName_(AutoState s)
     switch (s)
     {
         case AUTO_NORMAL: return "NORMAL";
+        case AUTO_BLIND:  return "BLIND";
         case AUTO_GAP:    return "GAP";
         case AUTO_LOST:   return "LOST";
         case AUTO_LOCKED: return "LOCKED";

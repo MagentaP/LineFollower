@@ -79,19 +79,20 @@ setInterval(function(){
   fetch('/man?cmd='+c);
 },80);
 var pm=[
-  ['Speed','speed',0.01,0.004,0.05,5,'0.15'],
+  ['Speed','speed',0.01,0.004,0.05,5,'0.2'],
   ['Max w','maxw',0.2,0.02,0.5,40,'6.0'],
   ['MaxWhl','maxwhl',1,0.2,1,60,'6.0'],
-  ['Max%','maxduty',2,0.4,10,100,'80'],
+  ['Max%','maxduty',2,0.4,10,100,'100'],
   ['Bias','bias',0.2,0.02,0,50,'20.0'],
-  ['T-Slo','turnslow',0.02,0.01,0,5,'4.5'],
+  ['T-Slo','turnslow',0.02,0.01,0,5,'3.0'],
   ['T-Bia','turnbias',0.2,0.04,0,60,'0'],
-  ['Gap','gap',20,4,0,10000,'250'],
+  ['BlindG','blindg',0.05,0.01,0,10,'3.1'],
+  ['Gap','gap',20,4,0,10000,'0'],
   ['Lost','ltime',40,10,0,10000,'1000'],
   ['Conf','conf',0.02,0.002,0.01,1,'0.15'],
   ['Pos-KP','poskp',0.1,0.01,0,20,'0.5'],
   ['Pos-KI','poski',0.04,0.004,0,10,'0.0'],
-  ['Pos-KD','poskd',0.2,0.02,0,50,'40.0'],
+  ['Pos-KD','poskd',0.2,0.02,0,300,'180.0'],
   ['Pos-IL','posilim',0.1,0.02,0.5,20,'4.0'],
   ['YA-KP','yakp',0.2,0.02,0,50,'1.2'],
   ['YA-KI','yaki',0.1,0.01,0,30,'0.0'],
@@ -269,6 +270,10 @@ void httpHandleSet()
         else if (k == "turnbias")
         {
             turn_bias = v;
+        }
+        else if (k == "blindg")
+        {
+            blind_pred_gain = v;
         }
         else if (k == "gap")
         {

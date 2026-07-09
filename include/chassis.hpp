@@ -5,7 +5,7 @@
 #include "controller.hpp"
 #include "sensor.hpp"
 
-enum AutoState { AUTO_NORMAL, AUTO_GAP, AUTO_LOST, AUTO_LOCKED };
+enum AutoState { AUTO_NORMAL, AUTO_BLIND, AUTO_GAP, AUTO_LOST, AUTO_LOCKED };
 
 class Chassis
 {
@@ -44,6 +44,7 @@ private:
     int lock_count_ = 0;
     float last_pos_ = 0, last_omega_ = 0, recovery_sign_ = 1;
     float pos_integral_ = 0, pos_prev_ = 0;
+    float pred_pos_ = 0;
     bool  pos_first_ = true;
 
     void updateImu_();
@@ -57,6 +58,7 @@ private:
     void handleManual_();
     void handleAuto_();
     void autoNormal_();
+    void autoBlind_();
     void autoGap_();
     void autoLost_();
     void autoLocked_();

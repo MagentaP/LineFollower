@@ -10,7 +10,7 @@ struct ImuConfig
     float rot_yaw = 90, rot_pitch = -90, rot_roll = 0;
     float off[3] = {0.05f, -0.045f, 0.075f};
     float ekf_q = 0.02f, ekf_r = 0.05f;
-    float fall_tilt = 30.0f;
+    float fall_tilt = 80.0f;
     float gyro_scale = 500.0f / 32768.0f;
     float accel_scale = 4.0f / 32768.0f;
 };
