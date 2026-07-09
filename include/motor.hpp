@@ -65,13 +65,14 @@ public:
         int d = (int)(fabs(pct) * 1023.0f / 100.0f);
         if (pct > 0)
         {
-            ledcWrite(ch_in1_, d);
-            ledcWrite(ch_in2_, 0);
+            // 慢衰减(驱动-刹车): 保持一脚常高, 另一脚反相 PWM
+            ledcWrite(ch_in1_, 1023);
+            ledcWrite(ch_in2_, 1023 - d);
         }
         else if (pct < 0)
         {
-            ledcWrite(ch_in1_, 0);
-            ledcWrite(ch_in2_, d);
+            ledcWrite(ch_in2_, 1023);
+            ledcWrite(ch_in1_, 1023 - d);
         }
         else
         {
