@@ -37,6 +37,7 @@ const int CONTROL_INTERVAL_MS = 10;
 const int LOCKED_STABLE_COUNT = 25;
 const int LINE_ON_THRESH = 2200;
 const int LINE_OFF_THRESH = 1500;
+const int LINE_GRAY_MIN = 200;
 const int PWM_FREQ = 1000;
 const int M1_IN1 = 13, M1_IN2 = 15;
 const int M2_IN1 = 14, M2_IN2 = 25;
